@@ -14,6 +14,7 @@ MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
 MQTT_USERNAME = os.environ.get("MQTT_USERNAME")
 MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD")
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", 30))
+DEVICE_ID = os.environ.get("DEVICE_ID", "sma_inverter")
 
 
 def login():
@@ -51,14 +52,13 @@ def extract_values(data):
 
 
 def publish_ha_discovery(
-    client, object_id, key, name, unit, device_class, state_class, icon, value_template
+    client, sensor, name, unit, device_class, state_class, icon, value_template
 ):
-    topic = f"{HA_DISCOVERY_PREFIX}/sensor/{object_id}/config"
+    topic = f"{HA_DISCOVERY_PREFIX}/sensor/{DEVICE_ID}/{sensor}/config"
     payload = {
         "name": name,
-        "object_id": object_id,
-        "state_topic": f"{HA_DISCOVERY_PREFIX}/sensor/{object_id}/state",
-        "unique_id": object_id,
+        "state_topic": f"{HA_DISCOVERY_PREFIX}/sensor/{DEVICE_ID}/{sensor}/state",
+        "unique_id": f"{DEVICE_ID}_{sensor}",
         "device": DEVICE_INFO,
     }
     if unit:
@@ -84,12 +84,11 @@ def publish_to_mqtt(client, values):
         value_template,
     ) in SMA_KEYS.items():
         val = values.get(key)
-        object_id = f"sma_{key.lower()}"
+        sensor = key.lower()
         # Publish Home Assistant discovery config
         publish_ha_discovery(
             client,
-            object_id,
-            key,
+            sensor,
             name,
             unit,
             device_class,
@@ -98,7 +97,7 @@ def publish_to_mqtt(client, values):
             value_template,
         )
         # Publish state
-        state_topic = f"{HA_DISCOVERY_PREFIX}/sensor/{object_id}/state"
+        state_topic = f"{HA_DISCOVERY_PREFIX}/sensor/{DEVICE_ID}/{sensor}/state"
         if val is not None:
             client.publish(state_topic, val, retain=True)
 
