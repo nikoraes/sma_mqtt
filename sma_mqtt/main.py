@@ -57,7 +57,14 @@ def get_values(sid):
 def extract_values(data):
     device = next(iter(data))
     values = {}
-    for key, (name, unit, topic) in SMA_KEYS.items():
+    for key, (
+        name,
+        unit,
+        device_class,
+        state_class,
+        icon,
+        value_template,
+    ) in SMA_KEYS.items():
         val = data[device].get(key, {}).get("1", [{}])[0].get("val")
         values[key] = val
         logging.debug("Extracted value for %s (%s): %s", name, key, val)
