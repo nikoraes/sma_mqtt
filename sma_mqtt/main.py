@@ -23,6 +23,14 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 if not SMA_VERIFY_SSL:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# Mapping for Condition tags
+CONDITION_MAP = {
+    35: "Fault",
+    303: "Off",
+    307: "Ok",
+    455: "Warning",
+}
+
 
 def login():
     logging.info("Attempting to login to SMA inverter at %s", SMA_URL)
@@ -106,6 +114,17 @@ def publish_to_mqtt(client, values):
     ) in SMA_KEYS.items():
         val = values.get(key)
         sensor = key.lower()
+        # Special handling for Condition sensor
+        if key == "6180_08214800" and isinstance(val, list):
+            tag = (
+                val[0]["tag"]
+                if val and isinstance(val[0], dict) and "tag" in val[0]
+                else None
+            )
+            val = CONDITION_MAP.get(tag, str(tag) if tag is not None else None)
+        # Convert all non-None values to string for MQTT
+        if val is not None and not isinstance(val, (str, int, float, bytearray)):
+            val = str(val)
         # Publish Home Assistant discovery config
         publish_ha_discovery(
             client,
