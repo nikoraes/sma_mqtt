@@ -51,13 +51,14 @@ def extract_values(data):
 
 
 def publish_ha_discovery(
-    client, unique_id, key, name, unit, device_class, state_class, icon, value_template
+    client, object_id, key, name, unit, device_class, state_class, icon, value_template
 ):
-    topic = f"{HA_DISCOVERY_PREFIX}/sensor/sma_{unique_id}/config"
+    topic = f"{HA_DISCOVERY_PREFIX}/sensor/{object_id}/config"
     payload = {
         "name": name,
-        "state_topic": f"sma/{unique_id}/state",
-        "unique_id": f"sma_{unique_id}",
+        "object_id": object_id,
+        "state_topic": f"{HA_DISCOVERY_PREFIX}/sensor/{object_id}/state",
+        "unique_id": object_id,
         "device": DEVICE_INFO,
     }
     if unit:
@@ -83,11 +84,11 @@ def publish_to_mqtt(client, values):
         value_template,
     ) in SMA_KEYS.items():
         val = values.get(key)
-        unique_id = key.lower()
+        object_id = f"sma_{key.lower()}"
         # Publish Home Assistant discovery config
         publish_ha_discovery(
             client,
-            unique_id,
+            object_id,
             key,
             name,
             unit,
@@ -97,7 +98,7 @@ def publish_to_mqtt(client, values):
             value_template,
         )
         # Publish state
-        state_topic = f"sma/{unique_id}/state"
+        state_topic = f"{HA_DISCOVERY_PREFIX}/sensor/{object_id}/state"
         if val is not None:
             client.publish(state_topic, val, retain=True)
 
