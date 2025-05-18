@@ -106,6 +106,10 @@ def main():
     client = mqtt.Client()
     if MQTT_USERNAME and MQTT_PASSWORD:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+    if MQTT_PORT == 8883:
+        client.tls_set()  # Enable SSL/TLS for MQTT
+        if os.environ.get("MQTT_TLS_INSECURE", "false").lower() == "true":
+            client.tls_insecure_set(True)
     client.connect(MQTT_HOST, MQTT_PORT)
     client.loop_start()
     while True:
