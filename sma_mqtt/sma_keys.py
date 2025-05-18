@@ -37,7 +37,7 @@ SMA_KEYS = {
         "Daily Yield",
         "kWh",
         "energy",
-        "total_increasing",
+        "total",
         "mdi:counter",
         None,
         lambda v: float(v) / 1000 if v is not None else None,
