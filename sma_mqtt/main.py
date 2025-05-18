@@ -72,8 +72,14 @@ def extract_values(data):
         state_class,
         icon,
         value_template,
+        transform,
     ) in SMA_KEYS.items():
         val = data[device].get(key, {}).get("1", [{}])[0].get("val")
+        if transform:
+            try:
+                val = transform(val)
+            except Exception as e:
+                logging.warning("Transform failed for %s (%s): %s", name, key, e)
         values[key] = val
         logging.debug("Extracted value for %s (%s): %s", name, key, val)
     return values
@@ -111,18 +117,12 @@ def publish_to_mqtt(client, values):
         state_class,
         icon,
         value_template,
+        # transform is not used here anymore
+        *_,
     ) in SMA_KEYS.items():
         val = values.get(key)
         sensor = key.lower()
-        # Special handling for Condition sensor
-        if key == "6180_08214800" and isinstance(val, list):
-            tag = (
-                val[0]["tag"]
-                if val and isinstance(val[0], dict) and "tag" in val[0]
-                else None
-            )
-            val = CONDITION_MAP.get(tag, str(tag) if tag is not None else None)
-        # Convert all non-None values to string for MQTT
+        # Remove all transformation logic here; values are already transformed in extract_values
         if val is not None and not isinstance(val, (str, int, float, bytearray)):
             val = str(val)
         # Publish Home Assistant discovery config
